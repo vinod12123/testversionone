@@ -41,27 +41,27 @@ const footer = document.getElementById('footer');
 let brand = {
     app: {
         language: 'en',
-        name: 'MiroTalk',
-        title: 'MiroTalk<br />Free browser based Real-time video calls.<br />Simple, Secure, Fast.',
+        name: 'welcome',
+        title: 'welcome',
         description:
-            'Start your next video call with a single click. No download, plug-in, or login is required. Just get straight to talking, messaging, and sharing your screen.',
+            'Welcome.',
         joinDescription: 'Pick a room name.<br />How about this one?',
         joinButtonLabel: 'JOIN ROOM',
         joinLastLabel: 'Your recent room:',
     },
     site: {
-        shortcutIcon: '../images/logo.svg',
-        appleTouchIcon: '../images/logo.svg',
-        landingTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
-        newCallTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
-        newCallRoomTitle: 'Pick name. <br />Share URL. <br />Start conference.',
+        // shortcutIcon: '../images/logo.svg',
+        // appleTouchIcon: '../images/logo.svg',
+        // landingTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
+        // newCallTitle: 'MiroTalk a Free Secure Video Calls, Chat & Screen Sharing.',
+        newCallRoomTitle: 'Welcome1',
         newCallRoomDescription:
-            "Each room has its disposable URL. Just pick a room name and share your custom URL. It's that easy.",
-        loginTitle: 'MiroTalk - Host Protected login required.',
-        clientTitle: 'MiroTalk WebRTC Video call, Chat Room & Screen Sharing.',
-        privacyPolicyTitle: 'MiroTalk - privacy and policy.',
+            "Welcome2",
+        loginTitle: ' - Host Protected login required.',
+        clientTitle: 'WebRTC Video call, Chat Room & Screen Sharing.',
+        privacyPolicyTitle: ' - privacy and policy.',
         stunTurnTitle: 'Test Stun/Turn Servers.',
-        notFoundTitle: 'MiroTalk - 404 Page not found.',
+        notFoundTitle: ' - 404 Page not found.',
     },
     html: {
         topSponsors: true,
@@ -75,36 +75,36 @@ let brand = {
         supportUs: true,
         footer: true,
     },
-    about: {
-        imageUrl: '../images/mirotalk-logo.gif',
-        title: 'WebRTC P2P v1.7.13',
-        html: `
-            <button 
-                id="support-button" 
-                data-umami-event="Support button" 
-                onclick="window.open('https://codecanyon.net/user/miroslavpejic85')">
-                <i class="fas fa-heart" ></i>&nbsp;Support
-            </button>
-            <br /><br /><br />
-            Author:<a 
-                id="linkedin-button" 
-                data-umami-event="Linkedin button" 
-                href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" target="_blank"> 
-                Miroslav Pejic
-            </a>
-            <br /><br />
-            Email:<a 
-                id="email-button" 
-                data-umami-event="Email button" 
-                href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
-                miroslav.pejic.85@gmail.com
-            </a>
-            <br /><br />
-            <hr />
-            <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
-            <hr />
-        `,
-    },
+    // about: {
+    //     imageUrl: '../images/mirotalk-logo.gif',
+    //     title: 'WebRTC P2P v1.7.13',
+    //     html: `
+    //         <button 
+    //             id="support-button" 
+    //             data-umami-event="Support button" 
+    //             onclick="window.open('https://codecanyon.net/user/miroslavpejic85')">
+    //             <i class="fas fa-heart" ></i>&nbsp;Support
+    //         </button>
+    //         <br /><br /><br />
+    //         Author:<a 
+    //             id="linkedin-button" 
+    //             data-umami-event="Linkedin button" 
+    //             href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" target="_blank"> 
+    //             Miroslav Pejic
+    //         </a>
+    //         <br /><br />
+    //         Email:<a 
+    //             id="email-button" 
+    //             data-umami-event="Email button" 
+    //             href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
+    //             miroslav.pejic.85@gmail.com
+    //         </a>
+    //         <br /><br />
+    //         <hr />
+    //         <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
+    //         <hr />
+    //     `,
+    // },
     widget: {
         enabled: false,
         roomId: 'support-room',
@@ -145,6 +145,8 @@ async function initBrand() {
     await getBrand();
 
     handleBrand();
+
+     applyMinimalCardLayout(); // 👈 ADD THIS
 
     handleWidget();
 }
@@ -285,3 +287,51 @@ function elementDisplay(element, display, mode = 'block') {
 }
 
 initBrand();
+
+
+
+// added 
+
+function applyMinimalCardLayout() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* Center card vertically */
+        .site-content {
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Remove section spacing */
+        .cta.section {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100%;
+        }
+
+        /* FIX: keep card rectangular (natural height) */
+        .cta-inner {
+            max-width: 480px !important;
+            width: 100%;
+            padding: 32px 28px !important;
+            height: auto !important;
+            min-height: unset !important;
+        }
+
+        /* Ensure vertical layout inside card */
+        .cta-inner,
+        .cta-action,
+        .form-group-desktop {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        /* Hide unused hero leftovers */
+        .hero,
+        .section-header {
+            display: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+}

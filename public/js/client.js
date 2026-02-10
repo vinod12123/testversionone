@@ -46,7 +46,7 @@ const images = {
     message: '../images/message.png',
     leave: '../images/leave-room.png',
     vaShare: '../images/va-share.png',
-    about: '../images/mirotalk-logo.gif',
+    // about: '../images/mirotalk-logo.gif',
     feedback: '../images/feedback.png',
     forbidden: '../images/forbidden.png',
     avatar: '../images/mirotalk-logo.png',
@@ -194,7 +194,7 @@ const whiteboardBtn = getId('whiteboardBtn');
 const snapshotRoomBtn = getId('snapshotRoomBtn');
 const fileShareBtn = getId('fileShareBtn');
 const documentPiPBtn = getId('documentPiPBtn');
-const aboutBtn = getId('aboutBtn');
+// const aboutBtn = getId('aboutBtn');
 
 // Buttons bottom
 const bottomButtons = getId('bottomButtons');
@@ -712,8 +712,11 @@ let isHostProtected = false; // Username and Password required to initialize roo
 let isPeerAuthEnabled = false; // Username and Password required in the URL params to join room
 
 // survey
-let surveyActive = true; // when leaving the room give a feedback, if false will be redirected to newcall page
-let surveyURL = 'https://www.questionpro.com/t/AUs7VZq00L';
+let surveyActive = false;
+
+//let surveyActive = true; // when leaving the room give a feedback, if false will be redirected to newcall page
+//let surveyURL = 'https://www.questionpro.com/t/AUs7VZq00L';
+let surveyURL = 'http://localhost:3000';
 
 // Redirect on leave room
 let redirectActive = false;
@@ -1368,8 +1371,13 @@ function handleServerInfo(config) {
     isPeerAuthEnabled = user_auth;
 
     // Get survey settings from server
-    surveyActive = survey.active;
-    surveyURL = survey.url;
+    // surveyActive = survey.active;
+    // surveyURL = survey.url;
+
+ 
+    surveyActive = false;
+    surveyURL = null;
+
 
     // Get redirect settings from server
     redirectActive = redirect.active;
@@ -1513,7 +1521,7 @@ function handleButtonsRule() {
         { element: fileShareBtn, display: buttons.main.showFileShareBtn },
         { element: documentPiPBtn, display: showDocumentPipBtn && buttons.main.showDocumentPipBtn },
         { element: mySettingsBtn, display: buttons.main.showMySettingsBtn },
-        { element: aboutBtn, display: buttons.main.showAboutBtn },
+        // { element: aboutBtn, display: buttons.main.showAboutBtn },
     ]);
 
     // Chat buttons
@@ -5453,7 +5461,7 @@ function manageButtons() {
     setDocumentPiPBtn();
     setMySettingsBtn();
     setMySettingsExtraBtns();
-    setAboutBtn();
+    // setAboutBtn();
 
     // Buttons bottom
     setAudioBtn();
@@ -13557,58 +13565,58 @@ function handleKickedOut(config) {
 
 /**
  * MiroTalk about info
- */
-function showAbout() {
-    playSound('newMessage');
+//  */
+// function showAbout() {
+//     playSound('newMessage');
 
-    Swal.fire({
-        background: swBg,
-        position: 'center',
-        title: brand.about?.title && brand.about.title.trim() !== '' ? brand.about.title : 'WebRTC P2P v1.7.13',
-        imageUrl: brand.about?.imageUrl && brand.about.imageUrl.trim() !== '' ? brand.about.imageUrl : images.about,
-        customClass: { image: 'img-about' },
-        html: `
-            <br/>
-            <div id="about">
-                ${
-                    brand.about?.html && brand.about.html.trim() !== ''
-                        ? brand.about.html
-                        : `
-                        <button 
-                            id="support-button" 
-                            data-umami-event="Support button" 
-                            onclick="window.open('https://codecanyon.net/user/miroslavpejic85', '_blank')">
-                            <i class="${className.heart}"></i>&nbsp;Support
-                        </button>
-                        <br /><br /><br />
-                        Author: 
-                        <a 
-                            id="linkedin-button" 
-                            data-umami-event="Linkedin button" 
-                            href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" 
-                            target="_blank"> 
-                            Miroslav Pejic
-                        </a>
-                        <br /><br />
-                        Email: 
-                        <a 
-                            id="email-button" 
-                            data-umami-event="Email button" 
-                            href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
-                            miroslav.pejic.85@gmail.com
-                        </a>
-                        <br /><br />
-                        <hr />
-                        <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
-                        <hr />
-                        `
-                }
-            </div>
-        `,
-        showClass: { popup: 'animate__animated animate__fadeInDown' },
-        hideClass: { popup: 'animate__animated animate__fadeOutUp' },
-    });
-}
+//     Swal.fire({
+//         background: swBg,
+//         position: 'center',
+//         title: brand.about?.title && brand.about.title.trim() !== '' ? brand.about.title : 'WebRTC P2P v1.7.13',
+//         imageUrl: brand.about?.imageUrl && brand.about.imageUrl.trim() !== '' ? brand.about.imageUrl : images.about,
+//         customClass: { image: 'img-about' },
+//         html: `
+//             <br/>
+//             <div id="about">
+//                 ${
+//                     brand.about?.html && brand.about.html.trim() !== ''
+//                         ? brand.about.html
+//                         : `
+//                         <button 
+//                             id="support-button" 
+//                             data-umami-event="Support button" 
+//                             onclick="window.open('https://codecanyon.net/user/miroslavpejic85', '_blank')">
+//                             <i class="${className.heart}"></i>&nbsp;Support
+//                         </button>
+//                         <br /><br /><br />
+//                         Author: 
+//                         <a 
+//                             id="linkedin-button" 
+//                             data-umami-event="Linkedin button" 
+//                             href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" 
+//                             target="_blank"> 
+//                             Miroslav Pejic
+//                         </a>
+//                         <br /><br />
+//                         Email: 
+//                         <a 
+//                             id="email-button" 
+//                             data-umami-event="Email button" 
+//                             href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk P2P info"> 
+//                             miroslav.pejic.85@gmail.com
+//                         </a>
+//                         <br /><br />
+//                         <hr />
+//                         <span>&copy; 2025 MiroTalk P2P, all rights reserved</span>
+//                         <hr />
+//                         `
+//                 }
+//             </div>
+//         `,
+//         showClass: { popup: 'animate__animated animate__fadeInDown' },
+//         hideClass: { popup: 'animate__animated animate__fadeOutUp' },
+//     });
+// }
 
 /**
  * Init Exit Meeting
@@ -13641,7 +13649,7 @@ function leaveFeedback() {
         imageUrl: images.feedback,
         position: 'top',
         title: 'Leave a feedback',
-        text: 'Do you want to rate your MiroTalk experience?',
+        text: 'Do you want to rate your experience?',
         confirmButtonText: `Yes`,
         denyButtonText: `No`,
         cancelButtonText: `Cancel`,
