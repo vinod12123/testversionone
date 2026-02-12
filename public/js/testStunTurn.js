@@ -15,16 +15,14 @@ if (iceServers) {
 } else {
     // http://localhost:3000/icetest
     iceServers = [
-        // Test some STUN server
         {
-            urls: 'stun:stun.l.google.com:19302',
-        },
-        // Test some TURN server
-        // https://www.metered.ca/tools/openrelay/
-        {
-            urls: 'turn:a.relay.metered.ca:443',
-            username: 'e8dd65b92c62d3e36cafb807',
-            credential: 'uWdWNmkhvyqTEswO',
+            urls: [
+                'turn:13.223.205.49:3478?transport=udp',
+                'turn:13.223.205.49:3478?transport=tcp',
+                'turns:13.223.205.49:5349?transport=tcp',
+            ],
+            username: 'vinod',
+            credential: '389c9b417a60f312ad77e700b617bcf6',
         },
     ];
 }
