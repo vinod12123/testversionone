@@ -1,3 +1,153 @@
+/*
+ * UI overrides for / and /newcall.
+ * Keep IDs and JS hooks unchanged; only improve layout and styling.
+ */
+
+:root {
+    --mtk-bg: radial-gradient(1200px circle at 20% 10%, rgba(55, 109, 249, 0.22), transparent 55%),
+        radial-gradient(900px circle at 80% 0%, rgba(255, 95, 160, 0.16), transparent 55%),
+        radial-gradient(900px circle at 70% 90%, rgba(255, 197, 90, 0.14), transparent 55%),
+        linear-gradient(180deg, #0b0c10 0%, #05060a 100%);
+    --mtk-card: rgba(255, 255, 255, 0.06);
+    --mtk-card-border: rgba(255, 255, 255, 0.12);
+    --mtk-text: rgba(255, 255, 255, 0.92);
+    --mtk-muted: rgba(255, 255, 255, 0.65);
+    --mtk-accent: #4f7dff;
+    --mtk-accent-2: #6b5bff;
+    --mtk-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+}
+
+body.has-animations {
+    background: var(--mtk-bg) !important;
+}
+
+.mtk-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.mtk-topbar {
+    padding: 20px 0;
+}
+
+.mtk-topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mtk-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.mtk-brand img {
+    width: 34px;
+    height: 34px;
+}
+
+.mtk-brand span {
+    font-family: 'Fira Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--mtk-text);
+}
+
+.mtk-main {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 28px 0 48px;
+}
+
+.mtk-hero {
+    width: 100%;
+    max-width: 980px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 28px;
+    align-items: center;
+}
+
+.mtk-hero h1 {
+    margin: 0 0 14px;
+    line-height: 1.05;
+}
+
+.mtk-hero p {
+    margin: 0;
+    color: var(--mtk-muted);
+}
+
+.mtk-card {
+    background: var(--mtk-card);
+    border: 1px solid var(--mtk-card-border);
+    border-radius: 14px;
+    box-shadow: var(--mtk-shadow);
+    padding: 22px;
+    backdrop-filter: blur(10px);
+}
+
+.mtk-card .form-group-desktop {
+    gap: 10px;
+}
+
+.mtk-card .form-input {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.mtk-card .form-input:focus {
+    border-color: var(--mtk-accent) !important;
+    box-shadow: 0 0 0 3px rgba(79, 125, 255, 0.22);
+}
+
+.mtk-primary {
+    background: linear-gradient(135deg, var(--mtk-accent) 0%, var(--mtk-accent-2) 100%) !important;
+    border: 0 !important;
+    color: #fff !important;
+}
+
+.mtk-primary:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+}
+
+.mtk-iconbtn {
+    width: 48px;
+    min-width: 48px;
+    padding: 0 !important;
+    display: inline-grid;
+    place-items: center;
+}
+
+.mtk-last-room {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--mtk-muted);
+}
+
+.mtk-last-room a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.mtk-footer {
+    padding: 18px 0 26px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+}
+
+@media (max-width: 900px) {
+    .mtk-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 640px) {
     .section:first-of-type {
         min-height: 0;

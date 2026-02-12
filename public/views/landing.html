@@ -42,49 +42,53 @@
 
 <body class="has-animations">
 
-    <!-- Top Welcome -->
-    <h1 class="welcome-title">Welcome</h1>
-
-    <!-- Centered Card -->
-    <div class="center-wrapper">
-        <section class="cta section center-content-mobile">
+    <div class="mtk-shell">
+        <header class="mtk-topbar">
             <div class="container">
-                <div class="cta-inner section-inner br-12">
+                <div class="mtk-topbar-inner">
+                    <a class="mtk-brand" href="/">
+                        <span>Meet</span>
+                    </a>
+                </div>
+            </div>
+        </header>
 
-                    <div class="cta-slogan">
-                        <p id="appJoinDescription" class="m-0">
-                            Pick a room name.<br />
-                            How about this one?
+        <main class="mtk-main">
+            <div class="container">
+                <div class="mtk-hero">
+                    <div>
+                        <h1 class="welcome-title">Welcome</h1>
+                        <p id="appJoinDescription">
+                            Create a room in seconds and share the link.
                         </p>
                     </div>
 
-                    <div class="cta-action">
+                    <section class="mtk-card">
                         <div class="form-group-desktop">
                             <input
                                 id="roomName"
                                 class="form-input"
                                 type="text"
                                 maxlength="32"
-                                value="mirotalk"
+                                value="meeting"
                             />
-
-                            <button
-                                id="joinRoomButton"
-                                class="button button-primary br-6 mt-16"
-                            >
-                                Join Room
-                            </button>
+                            <button id="joinRoomButton" class="button mtk-primary br-6">Join</button>
                         </div>
 
-                        <div id="lastRoomContainer" class="last-room mt-16">
+                        <div id="lastRoomContainer" class="mtk-last-room">
                             <span>Your recent room:</span>
                             <a id="lastRoom"></a>
                         </div>
-                    </div>
-
+                    </section>
                 </div>
             </div>
-        </section>
+        </main>
+
+        <footer class="mtk-footer">
+            <div class="container">
+                <div>Secure video calls in your browser.</div>
+            </div>
+        </footer>
     </div>
 
 </body>

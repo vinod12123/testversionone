@@ -552,6 +552,8 @@ let myPeerName = getPeerName();
 let myPeerAvatar = getPeerAvatar();
 let myToken = getPeerToken(); // peer JWT
 let isPresenter = false; // True Who init the room (aka first peer joined)
+let isAdmin = false; // True if peer has been granted admin permissions
+let roomAdmins = []; // socket.id list of room admins
 let myHandStatus = false;
 let myVideoStatus = false;
 let myAudioStatus = false;
@@ -1296,7 +1298,132 @@ function initClientPeer() {
     signalingSocket.on('kickOut', handleKickedOut);
     signalingSocket.on('disconnect', handleDisconnect);
     signalingSocket.on('removePeer', handleRemovePeer);
+    signalingSocket.on('room-admins', handleRoomAdmins);
 } // end [initClientPeer]
+
+/**
+ * Handle room admins updates from server
+ * @param {object} config data with admins array
+ */
+function handleRoomAdmins(config) {
+    const { admins } = config;
+    roomAdmins = Array.isArray(admins) ? admins : [];
+    isAdmin = roomAdmins.includes(myPeerId);
+    updateAllParticipantDropdownsForAdmin();
+}
+
+function canDoAdminActions() {
+    return isPresenter || isAdmin;
+}
+
+function updateAllParticipantDropdownsForAdmin() {
+    const participantElements = msgerCPList ? msgerCPList.querySelectorAll('.msger-peer-inputarea') : [];
+    participantElements.forEach((el) => {
+        const peerId = el.id.replace('_pMsgDiv', '');
+        const dropdownList = getId(peerId + '_pDropdownMenuList');
+        if (dropdownList) {
+            updateParticipantDropdownForAdmin(peerId, dropdownList);
+        }
+    });
+}
+
+function updateParticipantDropdownForAdmin(peerId, dropdownListEl) {
+    const shouldShowAdminControls = canDoAdminActions();
+
+    const ensureBtn = (suffix, html, onClick) => {
+        let btn = getId(peerId + suffix);
+        if (shouldShowAdminControls && !btn) {
+            const li = document.createElement('li');
+            li.innerHTML = html;
+            dropdownListEl.insertBefore(li, dropdownListEl.firstChild);
+            btn = getId(peerId + suffix);
+            if (btn) btn.addEventListener('click', onClick);
+        }
+        if (btn) btn.style.display = shouldShowAdminControls ? '' : 'none';
+    };
+
+    ensureBtn(
+        '_pKickOut',
+        `<button id="${peerId}_pKickOut" class="dropdown-item"><i class='fas fa-user-slash red'></i> Eject Participant</button>`,
+        (e) => {
+            e.preventDefault();
+            kickOut(peerId);
+        }
+    );
+    ensureBtn(
+        '_pToggleAudio',
+        `<button id="${peerId}_pToggleAudio" class="dropdown-item"><i class='fas fa-microphone red'></i> Mute Microphone</button>`,
+        (e) => {
+            e.preventDefault();
+            disablePeer(peerId, 'audio');
+        }
+    );
+    ensureBtn(
+        '_pToggleVideo',
+        `<button id="${peerId}_pToggleVideo" class="dropdown-item"><i class='fas fa-video red'></i> Stop Video</button>`,
+        (e) => {
+            e.preventDefault();
+            disablePeer(peerId, 'video');
+        }
+    );
+    ensureBtn(
+        '_pToggleScreen',
+        `<button id="${peerId}_pToggleScreen" class="dropdown-item"><i class='fas fa-desktop red'></i> Stop Screen</button>`,
+        (e) => {
+            e.preventDefault();
+            disablePeer(peerId, 'screen');
+        }
+    );
+    ensureBtn(
+        '_pRequestGeo',
+        `<button id="${peerId}_pRequestGeo" class="dropdown-item"><i class='fas fa-location-dot'></i> Req. Geolocation</button>`,
+        (e) => {
+            e.preventDefault();
+            geo.askPeerGeoLocation(peerId);
+        }
+    );
+
+    // Add/update Grant/Revoke Admin button
+    const existing = getId(peerId + '_pToggleAdmin');
+    if (shouldShowAdminControls && peerId !== myPeerId) {
+        const isPeerAdmin = roomAdmins.includes(peerId);
+        const label = isPeerAdmin ? 'Revoke Admin' : 'Grant Admin';
+        const iconClass = isPeerAdmin ? 'red' : 'green';
+
+        if (!existing) {
+            const li = document.createElement('li');
+            li.innerHTML = `<button id="${peerId}_pToggleAdmin" class="dropdown-item"><i class='fas fa-user-shield ${iconClass}'></i> ${label}</button>`;
+            dropdownListEl.appendChild(li);
+            const btn = getId(peerId + '_pToggleAdmin');
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setAdmin(peerId, !roomAdmins.includes(peerId));
+                });
+            }
+        } else {
+            existing.innerHTML = `<i class='fas fa-user-shield ${iconClass}'></i> ${label}`;
+        }
+    } else if (existing) {
+        existing.parentElement && existing.parentElement.remove();
+    }
+}
+
+async function setAdmin(targetPeerId, enable) {
+    if (!canDoAdminActions()) {
+        msgPopup('warning', 'Only the presenter/admin can manage admin permissions', 'top-end', 4000);
+        return;
+    }
+
+    await sendToServer('set-admin', {
+        room_id: roomId,
+        peer_id: myPeerId,
+        peer_name: myPeerName,
+        peer_uuid: myPeerUUID,
+        target_peer_id: targetPeerId,
+        enable,
+    });
+}
 
 /**
  * Send async data to signaling server (server.js)
@@ -1393,6 +1520,9 @@ function handleServerInfo(config) {
     isPresenter = is_presenter;
     console.log('New connection - presenter status from server:', isPresenter);
     isPeerPresenter.innerText = isPresenter;
+
+    // Update any already-rendered dropdowns
+    updateAllParticipantDropdownsForAdmin();
 
     // Peer identified if presenter or not then....
     handleShortcuts();
@@ -9765,10 +9895,10 @@ async function msgerAddPeers(peers) {
                           ? genGravatar(peer_name)
                           : genAvatarSvg(peer_name, 24);
 
-                // Dropdown menu options based on isPresenter
+                // Dropdown menu options based on isPresenter/admin
                 let dropdownOptions = '';
 
-                if (peer_presenter) {
+                if (peer_presenter || isAdmin) {
                     dropdownOptions = `
                         <li><button id="${peer_id}_pKickOut" class="dropdown-item"><i class='fas fa-user-slash red'></i> Eject Participant</button></li>
                         <li><button id="${peer_id}_pToggleAudio" class="dropdown-item"><i class='fas fa-microphone red'></i> Mute Microphone</button></li>
@@ -9843,6 +9973,12 @@ async function msgerAddPeers(peers) {
                     myPeerId,
                     peer_id
                 );
+
+                // Ensure dropdown includes admin toggle button (if applicable)
+                const dropdownList = getId(peer_id + '_pDropdownMenuList');
+                if (dropdownList) {
+                    updateParticipantDropdownForAdmin(peer_id, dropdownList);
+                }
 
                 // Dropdown toggle logic
                 const dropdownDiv = getId(peer_id + '_pMsgDiv').querySelector('.dropdown-menu-custom');

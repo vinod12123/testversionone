@@ -34,7 +34,6 @@ dependencies: {
     swagger-ui-express      : https://www.npmjs.com/package/swagger-ui-express
     uuid                    : https://www.npmjs.com/package/uuid
 }
-*/
 
 /**
  * MiroTalk P2P - Server component
@@ -423,6 +422,7 @@ const channels = {}; // collect channels
 const sockets = {}; // collect sockets
 const peers = {}; // collect peers info grp by channels
 const presenters = {}; // collect presenters grp by channels
+const roomAdmins = {}; // collect room admins grp by channels
 
 app.set('trust proxy', trustProxy); // Enables trust for proxy headers (e.g., X-Forwarded-For) based on the trustProxy setting
 app.use(helmet.noSniff()); // Enable content type sniffing prevention
@@ -1229,6 +1229,34 @@ io.sockets.on('connect', async (socket) => {
     });
 
     /**
+     * Grant/revoke admin to target peer in room
+     */
+    socket.on('set-admin', async (cfg) => {
+        const config = checkXSS(cfg);
+
+        if (!Validate.isValidData(config)) return;
+
+        const { room_id, peer_id, peer_name, peer_uuid, target_peer_id, enable } = config;
+
+        if (!(room_id in roomAdmins)) roomAdmins[room_id] = new Set();
+
+        const isPresenterOrAdmin = isPeerPresenterOrAdmin(room_id, peer_id, peer_name, peer_uuid);
+        if (!isPresenterOrAdmin) return;
+
+        if (!peers[room_id] || !peers[room_id][target_peer_id]) return;
+
+        if (enable) {
+            roomAdmins[room_id].add(target_peer_id);
+        } else {
+            roomAdmins[room_id].delete(target_peer_id);
+        }
+
+        const admins = Array.from(roomAdmins[room_id] || []);
+        socket.emit('room-admins', { admins });
+        await sendToRoom(room_id, socket.id, 'room-admins', { admins });
+    });
+
+    /**
      * Handle incoming data, res with a callback
      */
     socket.on('data', async (dataObj, cb) => {
@@ -1372,6 +1400,9 @@ io.sockets.on('connect', async (socket) => {
         // no presenter aka host in presenters init
         if (!(channel in presenters)) presenters[channel] = {};
 
+        // no admins init
+        if (!(channel in roomAdmins)) roomAdmins[channel] = new Set();
+
         let is_presenter = true;
 
         // User Auth required, we check if peer valid
@@ -1477,6 +1508,16 @@ io.sockets.on('connect', async (socket) => {
         channels[channel][socket.id] = socket;
         socket.channels[channel] = channel;
 
+        // First peer in room becomes admin
+        if (Object.keys(peers[channel]).length === 1) {
+            roomAdmins[channel].add(socket.id);
+        }
+
+        // Send admins list to current peer and broadcast to room
+        const admins = Array.from(roomAdmins[channel] || []);
+        socket.emit('room-admins', { admins });
+        await sendToRoom(channel, socket.id, 'room-admins', { admins });
+
         const peerCounts = Object.keys(peers[channel]).length;
 
         // Send some server info to joined peer
@@ -1565,15 +1606,15 @@ io.sockets.on('connect', async (socket) => {
         //log.debug('[' + socket.id + '] Room action:', config);
         const { room_id, peer_id, peer_name, peer_uuid, password, action } = config;
 
-        // Check if peer is presenter
-        const isPresenter = isPeerPresenter(room_id, peer_id, peer_name, peer_uuid);
+        // Check if peer is presenter or admin
+        const isPresenterOrAdmin = isPeerPresenterOrAdmin(room_id, peer_id, peer_name, peer_uuid);
 
         let room_is_locked = false;
         //
         try {
             switch (action) {
                 case 'lock':
-                    if (!isPresenter) return;
+                    if (!isPresenterOrAdmin) return;
                     peers[room_id]['lock'] = true;
                     peers[room_id]['password'] = password;
                     await sendToRoom(room_id, socket.id, 'roomAction', {
@@ -1583,7 +1624,7 @@ io.sockets.on('connect', async (socket) => {
                     room_is_locked = true;
                     break;
                 case 'unlock':
-                    if (!isPresenter) return;
+                    if (!isPresenterOrAdmin) return;
                     delete peers[room_id]['lock'];
                     delete peers[room_id]['password'];
                     await sendToRoom(room_id, socket.id, 'roomAction', {
@@ -1680,13 +1721,11 @@ io.sockets.on('connect', async (socket) => {
 
         log.debug('cmd', config);
 
-        // Only the presenter can do this actions
+        // Only the presenter/admin can do this actions
         const presenterActions = ['geoLocation'];
         if (presenterActions.some((v) => action === v)) {
-            // Check if peer is presenter
-            const isPresenter = isPeerPresenter(room_id, peer_id, peer_name, peer_uuid);
-            // if not presenter do nothing
-            if (!isPresenter) return;
+            const isPresenterOrAdmin = isPeerPresenterOrAdmin(room_id, peer_id, peer_name, peer_uuid);
+            if (!isPresenterOrAdmin) return;
         }
 
         if (send_to_all) {
@@ -1779,17 +1818,17 @@ io.sockets.on('connect', async (socket) => {
             send_to_all,
         } = config;
 
-        // Only the presenter can do this actions
+        // Only the presenter/admin can do this actions
         const presenterActions = ['muteAudio', 'hideVideo', 'ejectAll'];
         if (presenterActions.some((v) => peer_action === v)) {
-            // Check if peer is presenter
-            const isPresenter = isPeerPresenter(room_id, peer_id, peer_name, peer_uuid);
-            // if not presenter do nothing
-            if (!isPresenter) return;
+            const isPresenterOrAdmin = isPeerPresenterOrAdmin(room_id, socket.id, peer_name, peer_uuid);
+            if (!isPresenterOrAdmin) return;
         }
 
+        const target_peer_id = send_to_all ? null : peer_id;
+
         const data = {
-            peer_id: peer_id,
+            peer_id: socket.id,
             peer_name: peer_name,
             peer_avatar: peer_avatar,
             peer_action: peer_action,
@@ -1802,9 +1841,11 @@ io.sockets.on('connect', async (socket) => {
 
             await sendToRoom(room_id, socket.id, 'peerAction', data);
         } else {
-            log.debug('[' + socket.id + '] emit peerAction to [' + peer_id + '] from room_id [' + room_id + ']');
+            log.debug(
+                '[' + socket.id + '] emit peerAction to [' + target_peer_id + '] from room_id [' + room_id + ']'
+            );
 
-            await sendToPeer(peer_id, sockets, 'peerAction', data);
+            await sendToPeer(target_peer_id, sockets, 'peerAction', data);
         }
     });
 
@@ -1831,11 +1872,11 @@ io.sockets.on('connect', async (socket) => {
 
         const { room_id, peer_id, peer_uuid, peer_name } = config;
 
-        // Check if peer is presenter
-        const isPresenter = await isPeerPresenter(room_id, peer_id, peer_name, peer_uuid);
+        // Check if peer is presenter or admin
+        const isPresenterOrAdmin = await isPeerPresenterOrAdmin(room_id, socket.id, peer_name, peer_uuid);
 
-        // Only the presenter can kickOut others
-        if (isPresenter) {
+        // Only the presenter/admin can kickOut others
+        if (isPresenterOrAdmin) {
             log.debug('[' + socket.id + '] kick out peer [' + peer_id + '] from room_id [' + room_id + ']');
 
             await sendToPeer(peer_id, sockets, 'kickOut', {
@@ -2023,16 +2064,22 @@ io.sockets.on('connect', async (socket) => {
             delete channels[channel][socket.id];
             delete peers[channel][socket.id]; // delete peer data from the room
 
+            if (roomAdmins[channel]) {
+                roomAdmins[channel].delete(socket.id);
+            }
+
             switch (Object.keys(peers[channel]).length) {
                 case 0: // last peer disconnected from the room without room lock & password set
                     delete peers[channel];
                     delete presenters[channel];
+                    delete roomAdmins[channel];
                     delete channels[channel]; // Clean up channels to prevent memory leak
                     break;
                 case 2: // last peer disconnected from the room having room lock & password set
                     if (peers[channel]['lock'] && peers[channel]['password']) {
                         delete peers[channel]; // clean lock and password value from the room
                         delete presenters[channel]; // clean the presenter from the channel
+                        delete roomAdmins[channel];
                         delete channels[channel]; // Clean up channels to prevent memory leak
                     }
                     break;
@@ -2041,6 +2088,13 @@ io.sockets.on('connect', async (socket) => {
             }
         } catch (err) {
             log.error('Remove Peer', toJson(err));
+        }
+
+        if (roomAdmins[channel] && channels[channel]) {
+            const admins = Array.from(roomAdmins[channel] || []);
+            for (let id in channels[channel]) {
+                await channels[channel][id].emit('room-admins', { admins });
+            }
         }
 
         const activeRooms = getActiveRooms();
@@ -2188,6 +2242,24 @@ function isPeerPresenter(room_id, peer_id, peer_name, peer_uuid) {
         return isPresenter;
     } catch (err) {
         log.error('isPeerPresenter', err);
+        return false;
+    }
+}
+
+/**
+ * Check if peer is presenter or admin
+ * @param {string} room_id
+ * @param {string} peer_id
+ * @param {string} peer_name
+ * @param {string} peer_uuid
+ * @returns boolean
+ */
+function isPeerPresenterOrAdmin(room_id, peer_id, peer_name, peer_uuid) {
+    try {
+        if (roomAdmins[room_id] && roomAdmins[room_id].has(peer_id)) return true;
+        return isPeerPresenter(room_id, peer_id, peer_name, peer_uuid);
+    } catch (err) {
+        log.error('isPeerPresenterOrAdmin', err);
         return false;
     }
 }
