@@ -224,6 +224,7 @@ const userEmoji = getId(`userEmoji`);
 
 // Chat room
 const msgerDraggable = getId('msgerDraggable');
+const msger = getId('msger');
 const msgerHeader = getId('msgerHeader');
 const msgerTogglePin = getId('msgerTogglePin');
 const msgerTheme = getId('msgerTheme');
@@ -3679,7 +3680,9 @@ function handleMediaError(mediaType, err) {
             errMessage = 'Permission denied in browser';
             break;
         case 'TypeError':
-            errMessage = 'Empty constraints object';
+            // Show the real error message from the browser instead of a generic one.
+            // This helps debugging issues like insecure origin, missing permissions, etc.
+            errMessage = err && err.message ? err.message : 'TypeError while accessing media devices';
             break;
         default:
             break;
@@ -3829,28 +3832,19 @@ async function loadLocalMedia(stream, kind) {
             // my video nav bar
             myVideoNavBar.className = 'navbar fadein';
 
+            // Show minimal info + media status on the local video tile:
+            // - current session time
+            // - video/audio status icons (my video on/off, my audio on/off)
+            // - optional privacy toggle
+            // - hand status
+            // Other controls (pin/focus/mirror/PiP/snapshot/fullscreen) remain hidden.
             myVideoNavBar.appendChild(myCurrentSessionTime);
-
-            !isMobileDevice && myVideoNavBar.appendChild(myVideoPinBtn);
-
-            buttons.local.showVideoFocusBtn && myVideoNavBar.appendChild(myVideoFocusBtn);
-
-            myVideoNavBar.appendChild(myVideoMirrorBtn);
-
-            if (showVideoPipBtn && buttons.local.showVideoPipBtn) myVideoNavBar.appendChild(myVideoPiPBtn);
-
-            if (buttons.local.showZoomInOutBtn) {
-                myVideoNavBar.appendChild(myVideoZoomInBtn);
-                myVideoNavBar.appendChild(myVideoZoomOutBtn);
-            }
-
-            buttons.local.showSnapShotBtn && myVideoNavBar.appendChild(myVideoToImgBtn);
-            buttons.local.showVideoCircleBtn && myVideoNavBar.appendChild(myPrivacyBtn);
-
-            isVideoFullScreenSupported && myVideoNavBar.appendChild(myVideoFullScreenBtn);
 
             myVideoNavBar.appendChild(myVideoStatusIcon);
             myVideoNavBar.appendChild(myAudioStatusIcon);
+
+            buttons.local.showVideoCircleBtn && myVideoNavBar.appendChild(myPrivacyBtn);
+
             myVideoNavBar.appendChild(myHandStatusIcon);
 
             // add my pitchBar
@@ -4005,20 +3999,7 @@ async function loadLocalMedia(stream, kind) {
             myScreenNavBar.className = 'navbar fadein';
 
             // attach to screen nav bar
-            !isMobileDevice && myScreenNavBar.appendChild(myScreenPinBtn);
-
-            buttons.local.showVideoFocusBtn && myScreenNavBar.appendChild(myScreenFocusBtn);
-
-            buttons.local.showSnapShotBtn && myScreenNavBar.appendChild(myScreenToImgBtn);
-
-            myScreenNavBar.appendChild(myScreenPiPBtn);
-
-            if (buttons.local.showZoomInOutBtn) {
-                myScreenNavBar.appendChild(myScreenZoomInBtn);
-                myScreenNavBar.appendChild(myScreenZoomOutBtn);
-            }
-
-            isVideoFullScreenSupported && myScreenNavBar.appendChild(myScreenFullScreenBtn);
+            // Keep the local screen navbar empty to hide pin/focus/PiP/snapshot/fullscreen controls.
 
             myScreenMedia.setAttribute('id', 'myScreen');
             myScreenMedia.setAttribute('playsinline', true);
@@ -4312,15 +4293,11 @@ async function loadRemoteMediaStream(stream, peers, peer_id, kind) {
             remoteExpandContainerDiv.className = 'expand-video-content';
 
             // attach to remote video nav bar
-            !isMobileDevice && remoteVideoNavBar.appendChild(remoteVideoPinBtn);
+            // We still hide pin/focus/mirror/PiP/snapshot/fullscreen controls,
+            // but we DO show media status icons (participant video/audio on/off)
+            // together with the 3-dots expand menu.
 
-            buttons.remote.showVideoFocusBtn && remoteVideoNavBar.appendChild(remoteVideoFocusBtn);
-
-            remoteVideoNavBar.appendChild(remoteVideoMirrorBtn);
-
-            if (showVideoPipBtn && buttons.remote.showVideoPipBtn) remoteVideoNavBar.appendChild(remoteVideoPiPBtn);
-
-            // Add to expand container div...
+            // Add only allowed actions to the expand container div...
             if (buttons.remote.showZoomInOutBtn) {
                 remoteExpandContainerDiv.appendChild(remoteVideoZoomInBtn);
                 remoteExpandContainerDiv.appendChild(remoteVideoZoomOutBtn);
@@ -4334,19 +4311,17 @@ async function loadRemoteMediaStream(stream, peers, peer_id, kind) {
             remoteExpandBtnDiv.appendChild(remoteExpandBtn);
             remoteExpandBtnDiv.appendChild(remoteExpandContainerDiv);
 
-            buttons.remote.showSnapShotBtn && remoteVideoNavBar.appendChild(remoteVideoToImgBtn);
-
-            isVideoFullScreenSupported && remoteVideoNavBar.appendChild(remoteVideoFullScreenBtn);
-
-            remoteVideoNavBar.appendChild(remoteVideoStatusIcon);
-            remoteVideoNavBar.appendChild(remoteAudioStatusIcon);
-
             // Disabled audio volume control on Mobile devices
             if (!isMobileDevice && peer_audio && buttons.remote.showAudioVolume) {
                 remoteVideoNavBar.appendChild(remoteAudioVolume);
             }
-            remoteVideoNavBar.appendChild(remoteHandStatusIcon);
 
+            // Participant media status icons (video/audio on/off)
+            remoteVideoNavBar.appendChild(remoteVideoStatusIcon);
+            remoteVideoNavBar.appendChild(remoteAudioStatusIcon);
+
+            // Hand status + expand (3-dots) menu
+            remoteVideoNavBar.appendChild(remoteHandStatusIcon);
             remoteVideoNavBar.appendChild(remoteExpandBtnDiv);
 
             remoteMedia.setAttribute('id', peer_id + '___video');
@@ -4547,19 +4522,9 @@ async function loadRemoteMediaStream(stream, peers, peer_id, kind) {
             remoteScreenAvatarImage.className = 'videoAvatarImage';
 
             remoteScreenNavBar.className = 'navbar fadein';
-            !isMobileDevice && remoteScreenNavBar.appendChild(remoteScreenPinBtn);
 
-            buttons.remote.showVideoFocusBtn && remoteScreenNavBar.appendChild(remoteScreenFocusBtn);
-
-            buttons.remote.showSnapShotBtn && remoteScreenNavBar.appendChild(remoteScreenToImgBtn);
-
-            remoteScreenNavBar.appendChild(remoteScreenPiPBtn);
-            if (buttons.remote.showZoomInOutBtn) {
-                remoteScreenNavBar.appendChild(remoteScreenZoomInBtn);
-                remoteScreenNavBar.appendChild(remoteScreenZoomOutBtn);
-            }
-            isVideoFullScreenSupported && remoteScreenNavBar.appendChild(remoteScreenFullScreenBtn);
-
+            // Hide pin/focus/PiP/snapshot/fullscreen controls on remote screen tiles,
+            // but keep the messaging/file-share controls.
             buttons.remote.showPrivateMessageBtn && remoteScreenNavBar.appendChild(remoteScreenPrivateMsgBtn);
             buttons.remote.showFileShareBtn && remoteScreenNavBar.appendChild(remoteScreenFileShareBtn);
             buttons.remote.showShareVideoAudioBtn && remoteScreenNavBar.appendChild(remoteScreenVideoAudioUrlBtn);
@@ -4957,6 +4922,10 @@ function handleVideoToggleMirror(videoId, videoToggleMirrorBtnId) {
 function handleVideoPlayerFs(videoId, videoFullScreenBtnId, peer_id = null) {
     const videoPlayer = getId(videoId);
     const videoFullScreenBtn = getId(videoFullScreenBtnId);
+
+    // If either the video element or the fullscreen button is missing,
+    // safely do nothing. This avoids TypeError when some controls are hidden.
+    if (!videoPlayer || !videoFullScreenBtn) return;
 
     // handle Chrome Firefox Opera Microsoft Edge videoPlayer ESC
     videoPlayer.addEventListener('fullscreenchange', (e) => {
@@ -5393,6 +5362,9 @@ function handleVideoZoomInOut(statusId, videoWrapId, zoomInBtnId, zoomOutBtnId, 
 function handlePictureInPicture(btnId, videoId, peerId) {
     const btnPiP = getId(btnId);
     const video = getId(videoId);
+
+    // If either the button or video is missing, skip PiP wiring.
+    if (!btnPiP || !video) return;
     const myVideoStatus = getId('myVideoStatusIcon');
     const remoteVideoStatus = getId(peerId + '_videoStatus');
     btnPiP.addEventListener('click', () => {
@@ -5486,6 +5458,10 @@ function videoMediaContainerUnpin() {
 function handleVideoToImg(videoStream, videoToImgBtn, peer_id = null) {
     const videoTIBtn = getId(videoToImgBtn);
     const video = getId(videoStream);
+
+    // If either the button or video is missing, do nothing.
+    if (!videoTIBtn || !video) return;
+
     videoTIBtn.addEventListener('click', () => {
         if (video.classList.contains('videoCircle')) {
             return userLog('toast', 'Snapshot not allowed if video on privacy mode');
@@ -5809,7 +5785,18 @@ function setChatRoomBtn() {
 
     // hide msger participants section
     msgerCPCloseBtn.addEventListener('click', (e) => {
+        // Always hide the participants panel itself
         elemDisplay(msgerCP, false);
+
+        // If the participants view was opened via the bottom Participants button,
+        // we also want to update the visibility state and possibly hide the
+        // draggable container when chat is not open.
+        if (isParticipantsVisible) {
+            isParticipantsVisible = false;
+            if (!isChatRoomVisible) {
+                elemDisplay(msgerDraggable, false);
+            }
+        }
     });
 
     // clean chat messages
@@ -5944,19 +5931,35 @@ function setChatRoomBtn() {
 function setParticipantsBtn() {
     participantsBtn.addEventListener('click', async (e) => {
         e.preventDefault();
+
+        // Whenever the Participants button is clicked, we want ONLY the
+        // participants panel visible, not the chat.
+
+        // Always hide the main chat section and mark chat as not visible.
+        if (msger) {
+            elemDisplay(msger, false);
+        }
+        isChatRoomVisible = false;
+
+        // If participants panel is currently visible, hide it (and possibly the container).
         if (isParticipantsVisible) {
-            hideChatRoomAndEmojiPicker();
             elemDisplay(msgerCP, false);
+            isParticipantsVisible = false;
+
+            // If chat is also not visible, hide the draggable container to avoid an empty overlay.
+            elemDisplay(msgerDraggable, false);
+
+            screenReaderAccessibility.announceMessage('Participants panel closed');
+            return;
         }
-        if (!isChatRoomVisible && !isParticipantsVisible) {
-            showChatRoomDraggable();
-            await sleep(500);
-            elemDisplay(msgerCP, true, 'flex');
-        }
-        isParticipantsVisible = !isParticipantsVisible;
-        screenReaderAccessibility.announceMessage(
-            isParticipantsVisible ? 'Participants panel opened' : 'Participants panel closed'
-        );
+
+        // Participants panel is currently hidden.
+        // Center and show the draggable container with ONLY participants visible.
+        chatCenter();
+        elemDisplay(msgerCP, true, 'flex');
+        elemDisplay(msgerDraggable, true, 'flex');
+        isParticipantsVisible = true;
+        screenReaderAccessibility.announceMessage('Participants panel opened');
     });
 }
 
@@ -9034,6 +9037,12 @@ function showChatRoomDraggable() {
     // Hide Participants chat
     elemDisplay(msgerCP, false);
 
+    // Always ensure the main chat section is visible when opening chat,
+    // even if it was previously hidden by the Participants button.
+    if (msger) {
+        elemDisplay(msger, true, 'flex');
+    }
+
     if (isMobileDevice) {
         elemDisplay(bottomButtons, false);
         isButtonsVisible = false;
@@ -10110,7 +10119,17 @@ function addMsgerPrivateBtn(
         emitMsg(myPeerName, myPeerAvatar, toPeerName, pMsg, true, myPeerId);
         appendMessage(myPeerName, rightChatAvatar, 'right', pMsg, true, null, toPeerName);
         msgerPrivateMsgInput.value = '';
+
+        // Close the participants panel after sending a private message.
+        // If chat is not open, also hide the draggable container so we don't
+        // leave an empty/black overlay visible.
         elemDisplay(msgerCP, false);
+        if (isParticipantsVisible) {
+            isParticipantsVisible = false;
+            if (!isChatRoomVisible) {
+                elemDisplay(msgerDraggable, false);
+            }
+        }
     }
 
     // Dropdown actions

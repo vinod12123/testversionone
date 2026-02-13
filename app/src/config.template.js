@@ -141,13 +141,15 @@ module.exports = {
             showShareRoomBtn: true, // For guests
             showHideMeBtn: true,
             showRecordStreamBtn: true,
-            showFullScreenBtn: true,
+            // Hide global fullscreen toggle from bottom bar
+            showFullScreenBtn: false,
             showRoomEmojiPickerBtn: true,
             showCaptionRoomBtn: true,
             showWhiteboardBtn: true,
-            showSnapshotRoomBtn: true,
+            // Hide global snapshot and Document PiP buttons from bottom bar
+            showSnapshotRoomBtn: false,
             showFileShareBtn: true,
-            showDocumentPipBtn: true,
+            showDocumentPipBtn: false,
             showAboutBtn: true, // Please keep me always true, Thank you!
         },
         chat: {
@@ -184,22 +186,28 @@ module.exports = {
             showAudioVolume: true,
             audioBtnClickAllowed: true,
             videoBtnClickAllowed: true,
-            showVideoPipBtn: true,
+            // Hide per-participant Picture in Picture button
+            showVideoPipBtn: false,
             showKickOutBtn: true,
-            showSnapShotBtn: true,
+            // Hide per-participant snapshot button
+            showSnapShotBtn: false,
             showFileShareBtn: true,
             showShareVideoAudioBtn: true,
             showGeoLocationBtn: true,
             showPrivateMessageBtn: true,
             showZoomInOutBtn: false,
-            showVideoFocusBtn: true,
+            // Hide per-participant focus mode button
+            showVideoFocusBtn: false,
         },
         local: {
-            showVideoPipBtn: true,
-            showSnapShotBtn: true,
+            // Hide local Picture in Picture button
+            showVideoPipBtn: false,
+            // Hide local snapshot button
+            showSnapShotBtn: false,
             showVideoCircleBtn: true,
             showZoomInOutBtn: false,
-            showVideoFocusBtn: true,
+            // Hide local focus mode button
+            showVideoFocusBtn: false,
         },
         whiteboard: {
             whiteboardLockBtn: false,
